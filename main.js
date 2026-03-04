@@ -19,6 +19,9 @@ const camera = new THREE.PerspectiveCamera(
   1000
 );
 
+let cameraRotationY = 0;
+let cameraRotationX = -0.3;
+
 // ======================
 // RENDERER
 // ======================
@@ -30,7 +33,7 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
 // ======================
-// LUZES
+// LUZ
 // ======================
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
@@ -53,7 +56,7 @@ ground.receiveShadow = true;
 scene.add(ground);
 
 // ======================
-// PLAYER (MAGA)
+// PLAYER
 // ======================
 
 const player = new THREE.Group();
@@ -89,11 +92,7 @@ for (let i = 0; i < 50; i++) {
 
   const cube = new THREE.Mesh(
     new THREE.BoxGeometry(4, height, 4),
-    new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      roughness: 0.2,
-      metalness: 0.2
-    })
+    new THREE.MeshStandardMaterial({ color: 0xffffff })
   );
 
   cube.position.set(
@@ -112,7 +111,7 @@ for (let i = 0; i < 50; i++) {
 }
 
 // ======================
-// CONTROLE
+// CONTROLES
 // ======================
 
 let velocityY = 0;
@@ -125,7 +124,7 @@ const jumpButton = document.getElementById("jumpButton");
 let moveX = 0;
 let moveZ = 0;
 
-// Joystick
+// Joystick corrigido
 joystick.addEventListener("touchmove", (e) => {
   const rect = joystick.getBoundingClientRect();
   const touch = e.touches[0];
@@ -134,7 +133,7 @@ joystick.addEventListener("touchmove", (e) => {
   const y = touch.clientY - rect.top - rect.height/2;
 
   moveX = x / 40;
-  moveZ = y / 40;
+  moveZ = -y / 40; // invertido corretamente
 });
 
 joystick.addEventListener("touchend", () => {
@@ -148,6 +147,40 @@ jumpButton.addEventListener("touchstart", () => {
     velocityY = 0.4;
     canJump = false;
   }
+});
+
+// ======================
+// ROTACIONAR CAMERA COM SWIPE
+// ======================
+
+let isRotating = false;
+let previousTouch = { x: 0, y: 0 };
+
+renderer.domElement.addEventListener("touchstart", (e) => {
+  if (e.target.id === "joystick" || e.target.id === "jumpButton") return;
+  isRotating = true;
+  previousTouch.x = e.touches[0].clientX;
+  previousTouch.y = e.touches[0].clientY;
+});
+
+renderer.domElement.addEventListener("touchmove", (e) => {
+  if (!isRotating) return;
+
+  const touch = e.touches[0];
+  const deltaX = touch.clientX - previousTouch.x;
+  const deltaY = touch.clientY - previousTouch.y;
+
+  cameraRotationY -= deltaX * 0.004;
+  cameraRotationX -= deltaY * 0.004;
+
+  cameraRotationX = Math.max(-1.2, Math.min(0.8, cameraRotationX));
+
+  previousTouch.x = touch.clientX;
+  previousTouch.y = touch.clientY;
+});
+
+renderer.domElement.addEventListener("touchend", () => {
+  isRotating = false;
 });
 
 // ======================
@@ -170,17 +203,6 @@ renderer.domElement.addEventListener("touchstart", (event) => {
 });
 
 // ======================
-// CAMERA TERCEIRA PESSOA
-// ======================
-
-function updateCamera() {
-  const offset = new THREE.Vector3(0, 5, 10);
-  offset.applyAxisAngle(new THREE.Vector3(0,1,0), player.rotation.y);
-  camera.position.copy(player.position).add(offset);
-  camera.lookAt(player.position);
-}
-
-// ======================
 // LOOP
 // ======================
 
@@ -189,11 +211,16 @@ function animate() {
 
   const speed = 0.15;
 
-  player.position.x -= Math.sin(player.rotation.y) * moveZ * speed;
-  player.position.z -= Math.cos(player.rotation.y) * moveZ * speed;
+  if (moveX !== 0 || moveZ !== 0) {
 
-  player.position.x -= Math.cos(player.rotation.y) * moveX * speed;
-  player.position.z += Math.sin(player.rotation.y) * moveX * speed;
+    const angle = Math.atan2(moveX, moveZ);
+    const finalAngle = angle + cameraRotationY;
+
+    player.position.x += Math.sin(finalAngle) * speed;
+    player.position.z += Math.cos(finalAngle) * speed;
+
+    player.rotation.y = finalAngle;
+  }
 
   // Gravidade
   velocityY += gravity;
@@ -205,14 +232,19 @@ function animate() {
     canJump = true;
   }
 
-  updateCamera();
+  // Camera terceira pessoa livre
+  const offset = new THREE.Vector3(0, 5, 10);
+  offset.applyAxisAngle(new THREE.Vector3(1,0,0), cameraRotationX);
+  offset.applyAxisAngle(new THREE.Vector3(0,1,0), cameraRotationY);
+
+  camera.position.copy(player.position).add(offset);
+  camera.lookAt(player.position);
 
   renderer.render(scene, camera);
 }
 
 animate();
 
-// Responsivo
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
