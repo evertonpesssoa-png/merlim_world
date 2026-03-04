@@ -3,9 +3,9 @@ body {
   overflow: hidden;
   background: #eef3ff;
   touch-action: none;
+  font-family: sans-serif;
 }
 
-/* Joystick */
 #joystick {
   position: fixed;
   bottom: 40px;
@@ -15,4 +15,17 @@ body {
   background: rgba(0,0,0,0.08);
   border-radius: 50%;
   backdrop-filter: blur(4px);
+}
+
+#jumpButton {
+  position: fixed;
+  bottom: 60px;
+  right: 40px;
+  width: 80px;
+  height: 80px;
+  background: rgba(0,0,0,0.1);
+  border-radius: 50%;
+  text-align: center;
+  line-height: 80px;
+  font-size: 30px;
 }
