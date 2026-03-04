@@ -3,7 +3,6 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160/build/three.mod
 // ======================
 // CENA
 // ======================
-
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xeef3ff);
 scene.fog = new THREE.Fog(0xeef3ff, 40, 300);
@@ -11,7 +10,6 @@ scene.fog = new THREE.Fog(0xeef3ff, 40, 300);
 // ======================
 // CAMERA
 // ======================
-
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
@@ -25,7 +23,6 @@ let cameraRotationX = -0.3;
 // ======================
 // RENDERER
 // ======================
-
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
@@ -35,7 +32,6 @@ document.body.appendChild(renderer.domElement);
 // ======================
 // LUZ
 // ======================
-
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
@@ -46,7 +42,6 @@ scene.add(dirLight);
 // ======================
 // CHÃO
 // ======================
-
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(1000, 1000),
   new THREE.MeshStandardMaterial({ color: 0xffffff })
@@ -58,7 +53,6 @@ scene.add(ground);
 // ======================
 // PLAYER
 // ======================
-
 const player = new THREE.Group();
 scene.add(player);
 
@@ -81,15 +75,12 @@ player.position.y = 1;
 // ======================
 // CUBOS INTERATIVOS
 // ======================
-
 const cubes = [];
 const raycaster = new THREE.Raycaster();
 const touchVector = new THREE.Vector2();
 
 for (let i = 0; i < 50; i++) {
-
   const height = Math.random() * 8 + 2;
-
   const cube = new THREE.Mesh(
     new THREE.BoxGeometry(4, height, 4),
     new THREE.MeshStandardMaterial({ color: 0xffffff })
@@ -102,6 +93,7 @@ for (let i = 0; i < 50; i++) {
   );
 
   cube.userData.module = "Módulo " + (i + 1);
+  cube.userData.open = false;
 
   cube.castShadow = true;
   cube.receiveShadow = true;
@@ -113,7 +105,6 @@ for (let i = 0; i < 50; i++) {
 // ======================
 // CONTROLES
 // ======================
-
 let velocityY = 0;
 let gravity = -0.02;
 let canJump = false;
@@ -124,16 +115,14 @@ const jumpButton = document.getElementById("jumpButton");
 let moveX = 0;
 let moveZ = 0;
 
-// Joystick corrigido
+// Joystick
 joystick.addEventListener("touchmove", (e) => {
   const rect = joystick.getBoundingClientRect();
   const touch = e.touches[0];
-
-  const x = touch.clientX - rect.left - rect.width/2;
-  const y = touch.clientY - rect.top - rect.height/2;
-
+  const x = touch.clientX - rect.left - rect.width / 2;
+  const y = touch.clientY - rect.top - rect.height / 2;
   moveX = x / 40;
-  moveZ = -y / 40; // invertido corretamente
+  moveZ = -y / 40;
 });
 
 joystick.addEventListener("touchend", () => {
@@ -152,7 +141,6 @@ jumpButton.addEventListener("touchstart", () => {
 // ======================
 // ROTACIONAR CAMERA COM SWIPE
 // ======================
-
 let isRotating = false;
 let previousTouch = { x: 0, y: 0 };
 
@@ -165,7 +153,6 @@ renderer.domElement.addEventListener("touchstart", (e) => {
 
 renderer.domElement.addEventListener("touchmove", (e) => {
   if (!isRotating) return;
-
   const touch = e.touches[0];
   const deltaX = touch.clientX - previousTouch.x;
   const deltaY = touch.clientY - previousTouch.y;
@@ -184,10 +171,84 @@ renderer.domElement.addEventListener("touchend", () => {
 });
 
 // ======================
-// INTERAÇÃO CUBOS
+// HUD CHAT E DASHBOARD
 // ======================
 
+const chatHUD = document.getElementById("chatHUD");
+const dashboardHUD = document.getElementById("dashboardHUD");
+const chatMessages = document.getElementById("chatMessages");
+const chatInput = document.getElementById("chatInput");
+
+const chatIcon = document.getElementById("chatIcon");
+const dashIcon = document.getElementById("dashIcon");
+
+function addMessage(text, type = "system") {
+  const msg = document.createElement("div");
+  msg.style.marginBottom = "4px";
+  msg.textContent = (type === "user" ? "Você: " : "Merlim: ") + text;
+  chatMessages.appendChild(msg);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+chatInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && chatInput.value.trim() !== "") {
+    const userText = chatInput.value;
+    addMessage(userText, "user");
+    setTimeout(() => addMessage("Processando módulo..."), 500);
+    chatInput.value = "";
+  }
+});
+
+// Dashboard
+let energy = 100;
+let modulesActivated = 0;
+const energyValue = document.getElementById("energyValue");
+const moduleCount = document.getElementById("moduleCount");
+
+function updateDashboard() {
+  energyValue.textContent = energy;
+  moduleCount.textContent = modulesActivated;
+}
+
+// Toggle HUD via ícones
+chatIcon.addEventListener("click", () => {
+  chatHUD.style.display = chatHUD.style.display === "flex" ? "none" : "flex";
+});
+
+dashIcon.addEventListener("click", () => {
+  dashboardHUD.style.display = dashboardHUD.style.display === "block" ? "none" : "block";
+});(userText, "user");
+    setTimeout(() => addMessage("Processando módulo..."), 500);
+    chatInput.value = "";
+  }
+});
+
+// Dashboard
+let energy = 100;
+let modulesActivated = 0;
+
+const energyValue = document.getElementById("energyValue");
+const moduleCount = document.getElementById("moduleCount");
+
+function updateDashboard() {
+  energyValue.textContent = energy;
+  moduleCount.textContent = modulesActivated;
+}
+
+// Toggle HUD via ícones
+chatIcon.addEventListener("click", () => {
+  chatHUD.style.display = chatHUD.style.display === "flex" ? "none" : "flex";
+});
+
+dashIcon.addEventListener("click", () => {
+  dashboardHUD.style.display = dashboardHUD.style.display === "block" ? "none" : "block";
+});
+
+// ======================
+// INTERAÇÃO CUBOS
+// ======================
 renderer.domElement.addEventListener("touchstart", (event) => {
+  if (event.target.id === "joystick" || event.target.id === "jumpButton") return;
 
   touchVector.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
   touchVector.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
@@ -198,21 +259,24 @@ renderer.domElement.addEventListener("touchstart", (event) => {
   if (intersects.length > 0) {
     const cube = intersects[0].object;
     cube.material.color.set(0xaaccff);
-    alert("Você tocou: " + cube.userData.module);
+
+    modulesActivated++;
+    energy -= 2;
+
+    addMessage("Módulo ativado: " + cube.userData.module);
+    updateDashboard();
   }
 });
 
 // ======================
 // LOOP
 // ======================
-
 function animate() {
   requestAnimationFrame(animate);
 
   const speed = 0.15;
 
   if (moveX !== 0 || moveZ !== 0) {
-
     const angle = Math.atan2(moveX, moveZ);
     const finalAngle = angle + cameraRotationY;
 
@@ -250,72 +314,3 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
-
-// ======================
-// HUD CHAT
-// ======================
-
-const chatMessages = document.getElementById("chatMessages");
-const chatInput = document.getElementById("chatInput");
-
-function addMessage(text, type = "system") {
-  const msg = document.createElement("div");
-  msg.style.marginBottom = "4px";
-  msg.textContent = (type === "user" ? "Você: " : "Merlim: ") + text;
-  chatMessages.appendChild(msg);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-chatInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && chatInput.value.trim() !== "") {
-    const userText = chatInput.value;
-
-    addMessage(userText, "user");
-
-    setTimeout(() => {
-      addMessage("Processando módulo...");
-    }, 500);
-
-    chatInput.value = "";
-  }
-});
-
-// ======================
-// HUD DASHBOARD
-// ======================
-
-let energy = 100;
-let modulesActivated = 0;
-
-const energyValue = document.getElementById("energyValue");
-const moduleCount = document.getElementById("moduleCount");
-
-function updateDashboard() {
-  energyValue.textContent = energy;
-  moduleCount.textContent = modulesActivated;
-}
-
-// Atualizar quando tocar cubo
-renderer.domElement.addEventListener("touchstart", (event) => {
-
-  touchVector.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
-  touchVector.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
-
-  raycaster.setFromCamera(touchVector, camera);
-  const intersects = raycaster.intersectObjects(cubes);
-
-  if (intersects.length > 0) {
-    const cube = intersects[0].object;
-
-    cube.material.color.set(0xaaccff);
-
-    modulesActivated++;
-    energy -= 2;
-
-    addMessage("Módulo ativado: " + cube.userData.module);
-
-    updateDashboard();
-  }
-});
-
-updateDashboard();
