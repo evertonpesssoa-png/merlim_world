@@ -1,17 +1,23 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Merlim - Mundo Arquiteto</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merlim Engine - Fase 2</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<div id="joystick"></div>
-<div id="jumpButton">▲</div>
+  <div id="joystick">
+    <div id="stick"></div>
+  </div>
 
-<script type="module" src="main.js"></script>
+  <button id="jumpBtn">PULAR</button>
+  <div id="rotateArea"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+  <script src="main.js"></script>
 
 </body>
 </html>
