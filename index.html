@@ -8,8 +8,25 @@
 </head>
 <body>
 
-<div id="joystick"></div>
+<div id="joystick">
+  <div id="stick"></div>
+</div>
+
 <div id="jumpButton">▲</div>
+<div id="rotateArea"></div>
+
+<!-- HUD CHAT -->
+<div id="chatHUD">
+  <div id="chatMessages"></div>
+  <input type="text" id="chatInput" placeholder="Falar com Merlim..." />
+</div>
+
+<!-- HUD DASHBOARD -->
+<div id="dashboardHUD">
+  <div class="dashItem">Energia: <span id="energyValue">100</span>%</div>
+  <div class="dashItem">Módulos: <span id="moduleCount">0</span></div>
+  <div class="dashItem">Status: <span id="playerStatus">Online</span></div>
+</div>
 
 <script type="module" src="main.js"></script>
 
