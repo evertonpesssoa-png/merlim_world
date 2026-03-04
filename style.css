@@ -6,6 +6,7 @@ body {
   font-family: sans-serif;
 }
 
+/* JOYSTICK */
 #joystick {
   position: fixed;
   bottom: 40px;
@@ -31,19 +32,45 @@ body {
 }
 
 /* =========================
+   HUD ÍCONES FIXOS
+========================= */
+#hudIcons {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.hudIcon {
+  width: 40px;
+  height: 40px;
+  background: rgba(0,0,0,0.5);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #00ffff;
+  font-size: 24px;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* =========================
    HUD CHAT
 ========================= */
 #chatHUD {
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: 60px;
+  left: 10px;
   width: 280px;
   height: 200px;
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(8px);
   border-radius: 12px;
   padding: 10px;
-  display: flex;
+  display: none; /* começa fechado */
   flex-direction: column;
 }
 
@@ -66,7 +93,7 @@ body {
 ========================= */
 #dashboardHUD {
   position: absolute;
-  top: 20px;
+  top: 60px;
   right: 20px;
   width: 220px;
   background: rgba(0,0,0,0.6);
@@ -75,6 +102,7 @@ body {
   padding: 12px;
   color: #00ffff;
   font-size: 13px;
+  display: none; /* começa fechado */
 }
 
 .dashItem {
