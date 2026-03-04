@@ -16,7 +16,6 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-
 let cameraRotationY = 0;
 let cameraRotationX = -0.3;
 
@@ -33,7 +32,6 @@ document.body.appendChild(renderer.domElement);
 // LUZ
 // ======================
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-
 const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
 dirLight.position.set(30, 60, 20);
 dirLight.castShadow = true;
@@ -69,7 +67,6 @@ const head = new THREE.Mesh(
 );
 head.position.y = 2.2;
 player.add(head);
-
 player.position.y = 1;
 
 // ======================
@@ -85,19 +82,14 @@ for (let i = 0; i < 50; i++) {
     new THREE.BoxGeometry(4, height, 4),
     new THREE.MeshStandardMaterial({ color: 0xffffff })
   );
-
   cube.position.set(
     (Math.random() - 0.5) * 200,
     height / 2,
     (Math.random() - 0.5) * 200
   );
-
   cube.userData.module = "Módulo " + (i + 1);
-  cube.userData.open = false;
-
   cube.castShadow = true;
   cube.receiveShadow = true;
-
   cubes.push(cube);
   scene.add(cube);
 }
@@ -111,7 +103,6 @@ let canJump = false;
 
 const joystick = document.getElementById("joystick");
 const jumpButton = document.getElementById("jumpButton");
-
 let moveX = 0;
 let moveZ = 0;
 
@@ -124,7 +115,6 @@ joystick.addEventListener("touchmove", (e) => {
   moveX = x / 40;
   moveZ = -y / 40;
 });
-
 joystick.addEventListener("touchend", () => {
   moveX = 0;
   moveZ = 0;
@@ -143,42 +133,34 @@ jumpButton.addEventListener("touchstart", () => {
 // ======================
 let isRotating = false;
 let previousTouch = { x: 0, y: 0 };
-
 renderer.domElement.addEventListener("touchstart", (e) => {
   if (e.target.id === "joystick" || e.target.id === "jumpButton") return;
   isRotating = true;
   previousTouch.x = e.touches[0].clientX;
   previousTouch.y = e.touches[0].clientY;
 });
-
 renderer.domElement.addEventListener("touchmove", (e) => {
   if (!isRotating) return;
   const touch = e.touches[0];
   const deltaX = touch.clientX - previousTouch.x;
   const deltaY = touch.clientY - previousTouch.y;
-
   cameraRotationY -= deltaX * 0.004;
   cameraRotationX -= deltaY * 0.004;
-
   cameraRotationX = Math.max(-1.2, Math.min(0.8, cameraRotationX));
-
   previousTouch.x = touch.clientX;
   previousTouch.y = touch.clientY;
 });
-
 renderer.domElement.addEventListener("touchend", () => {
   isRotating = false;
 });
 
 // ======================
-// HUD CHAT E DASHBOARD
+// HUD CHAT & DASHBOARD
 // ======================
-
 const chatHUD = document.getElementById("chatHUD");
 const dashboardHUD = document.getElementById("dashboardHUD");
 const chatMessages = document.getElementById("chatMessages");
 const chatInput = document.getElementById("chatInput");
-
 const chatIcon = document.getElementById("chatIcon");
 const dashIcon = document.getElementById("dashIcon");
 
@@ -204,7 +186,6 @@ let energy = 100;
 let modulesActivated = 0;
 const energyValue = document.getElementById("energyValue");
 const moduleCount = document.getElementById("moduleCount");
-
 function updateDashboard() {
   energyValue.textContent = energy;
   moduleCount.textContent = modulesActivated;
@@ -214,32 +195,6 @@ function updateDashboard() {
 chatIcon.addEventListener("click", () => {
   chatHUD.style.display = chatHUD.style.display === "flex" ? "none" : "flex";
 });
-
-dashIcon.addEventListener("click", () => {
-  dashboardHUD.style.display = dashboardHUD.style.display === "block" ? "none" : "block";
-});(userText, "user");
-    setTimeout(() => addMessage("Processando módulo..."), 500);
-    chatInput.value = "";
-  }
-});
-
-// Dashboard
-let energy = 100;
-let modulesActivated = 0;
-
-const energyValue = document.getElementById("energyValue");
-const moduleCount = document.getElementById("moduleCount");
-
-function updateDashboard() {
-  energyValue.textContent = energy;
-  moduleCount.textContent = modulesActivated;
-}
-
-// Toggle HUD via ícones
-chatIcon.addEventListener("click", () => {
-  chatHUD.style.display = chatHUD.style.display === "flex" ? "none" : "flex";
-});
-
 dashIcon.addEventListener("click", () => {
   dashboardHUD.style.display = dashboardHUD.style.display === "block" ? "none" : "block";
 });
@@ -248,7 +203,7 @@ dashIcon.addEventListener("click", () => {
 // INTERAÇÃO CUBOS
 // ======================
 renderer.domElement.addEventListener("touchstart", (event) => {
-  if (event.target.id === "joystick" || event.target.id === "jumpButton") return;
+  if (event.target.id === "joystick" || event.target.id === "jumpButton" || event.target.classList.contains("hudIcon")) return;
 
   touchVector.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
   touchVector.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
@@ -275,21 +230,16 @@ function animate() {
   requestAnimationFrame(animate);
 
   const speed = 0.15;
-
   if (moveX !== 0 || moveZ !== 0) {
     const angle = Math.atan2(moveX, moveZ);
     const finalAngle = angle + cameraRotationY;
-
     player.position.x += Math.sin(finalAngle) * speed;
     player.position.z += Math.cos(finalAngle) * speed;
-
     player.rotation.y = finalAngle;
   }
 
-  // Gravidade
   velocityY += gravity;
   player.position.y += velocityY;
-
   if (player.position.y <= 1) {
     player.position.y = 1;
     velocityY = 0;
@@ -300,7 +250,6 @@ function animate() {
   const offset = new THREE.Vector3(0, 5, 10);
   offset.applyAxisAngle(new THREE.Vector3(1,0,0), cameraRotationX);
   offset.applyAxisAngle(new THREE.Vector3(0,1,0), cameraRotationY);
-
   camera.position.copy(player.position).add(offset);
   camera.lookAt(player.position);
 
