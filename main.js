@@ -250,3 +250,72 @@ window.addEventListener("resize", () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+// ======================
+// HUD CHAT
+// ======================
+
+const chatMessages = document.getElementById("chatMessages");
+const chatInput = document.getElementById("chatInput");
+
+function addMessage(text, type = "system") {
+  const msg = document.createElement("div");
+  msg.style.marginBottom = "4px";
+  msg.textContent = (type === "user" ? "Você: " : "Merlim: ") + text;
+  chatMessages.appendChild(msg);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+chatInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && chatInput.value.trim() !== "") {
+    const userText = chatInput.value;
+
+    addMessage(userText, "user");
+
+    setTimeout(() => {
+      addMessage("Processando módulo...");
+    }, 500);
+
+    chatInput.value = "";
+  }
+});
+
+// ======================
+// HUD DASHBOARD
+// ======================
+
+let energy = 100;
+let modulesActivated = 0;
+
+const energyValue = document.getElementById("energyValue");
+const moduleCount = document.getElementById("moduleCount");
+
+function updateDashboard() {
+  energyValue.textContent = energy;
+  moduleCount.textContent = modulesActivated;
+}
+
+// Atualizar quando tocar cubo
+renderer.domElement.addEventListener("touchstart", (event) => {
+
+  touchVector.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+  touchVector.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(touchVector, camera);
+  const intersects = raycaster.intersectObjects(cubes);
+
+  if (intersects.length > 0) {
+    const cube = intersects[0].object;
+
+    cube.material.color.set(0xaaccff);
+
+    modulesActivated++;
+    energy -= 2;
+
+    addMessage("Módulo ativado: " + cube.userData.module);
+
+    updateDashboard();
+  }
+});
+
+updateDashboard();
