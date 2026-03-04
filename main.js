@@ -1,8 +1,16 @@
-/* =========================
-   CENA
-========================= */
+import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160/build/three.module.js";
+
+// ======================
+// CENA
+// ======================
+
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xffffff);
+scene.background = new THREE.Color(0xeef3ff);
+scene.fog = new THREE.Fog(0xeef3ff, 40, 300);
+
+// ======================
+// CAMERA
+// ======================
 
 const camera = new THREE.PerspectiveCamera(
   75,
@@ -11,191 +19,210 @@ const camera = new THREE.PerspectiveCamera(
   1000
 );
 
+let cameraRotationY = 0;
+let cameraRotationX = -0.3;
+
+// ======================
+// RENDERER
+// ======================
+
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
-/* =========================
-   LUZ
-========================= */
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(5, 10, 5);
-scene.add(light);
+// ======================
+// LUZ
+// ======================
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
-/* =========================
-   CHÃO
-========================= */
-const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(200, 200),
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
+dirLight.position.set(30, 60, 20);
+dirLight.castShadow = true;
+scene.add(dirLight);
+
+// ======================
+// CHÃO
+// ======================
+
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(1000, 1000),
   new THREE.MeshStandardMaterial({ color: 0xffffff })
 );
-floor.rotation.x = -Math.PI / 2;
-scene.add(floor);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
 
-/* =========================
-   PLAYER
-========================= */
+// ======================
+// PLAYER
+// ======================
+
 const player = new THREE.Group();
+scene.add(player);
 
 const body = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.5, 0.7, 2, 16),
-  new THREE.MeshStandardMaterial({ color: 0xcccccc })
+  new THREE.ConeGeometry(0.6, 2, 6),
+  new THREE.MeshStandardMaterial({ color: 0xf8f8ff })
 );
 body.position.y = 1;
 player.add(body);
 
-scene.add(player);
+const head = new THREE.Mesh(
+  new THREE.SphereGeometry(0.4, 16, 16),
+  new THREE.MeshStandardMaterial({ color: 0xffffff })
+);
+head.position.y = 2.2;
+player.add(head);
 
-/* =========================
-   CUBOS
-========================= */
+player.position.y = 1;
+
+// ======================
+// CUBOS INTERATIVOS
+// ======================
+
 const cubes = [];
+const raycaster = new THREE.Raycaster();
+const touchVector = new THREE.Vector2();
 
-function createCube(x, z) {
+for (let i = 0; i < 50; i++) {
+
+  const height = Math.random() * 8 + 2;
+
   const cube = new THREE.Mesh(
-    new THREE.BoxGeometry(2, 2, 2),
-    new THREE.MeshStandardMaterial({
-      color: 0xdfe6ff,
-      metalness: 0.6,
-      roughness: 0.2,
-      emissive: 0x001133,
-      emissiveIntensity: 0.5
-    })
+    new THREE.BoxGeometry(4, height, 4),
+    new THREE.MeshStandardMaterial({ color: 0xffffff })
   );
 
-  cube.position.set(x, 1, z);
-  scene.add(cube);
+  cube.position.set(
+    (Math.random() - 0.5) * 200,
+    height / 2,
+    (Math.random() - 0.5) * 200
+  );
+
+  cube.userData.module = "Módulo " + (i + 1);
+
+  cube.castShadow = true;
+  cube.receiveShadow = true;
+
   cubes.push(cube);
+  scene.add(cube);
 }
 
-createCube(5, 5);
-createCube(-5, 8);
-createCube(8, -5);
+// ======================
+// CONTROLES
+// ======================
 
-/* =========================
-   MOVIMENTO
-========================= */
-let moveX = 0;
-let moveZ = 0;
 let velocityY = 0;
 let gravity = -0.02;
 let canJump = false;
 
-/* =========================
-   JOYSTICK
-========================= */
 const joystick = document.getElementById("joystick");
-const stick = document.getElementById("stick");
+const jumpButton = document.getElementById("jumpButton");
 
-joystick.addEventListener("touchmove", e => {
+let moveX = 0;
+let moveZ = 0;
+
+// Joystick corrigido
+joystick.addEventListener("touchmove", (e) => {
   const rect = joystick.getBoundingClientRect();
   const touch = e.touches[0];
 
-  const x = touch.clientX - rect.left - 60;
-  const y = touch.clientY - rect.top - 60;
+  const x = touch.clientX - rect.left - rect.width/2;
+  const y = touch.clientY - rect.top - rect.height/2;
 
   moveX = x / 40;
-  moveZ = y / 40;
-
-  stick.style.left = (x + 60) + "px";
-  stick.style.top = (y + 60) + "px";
+  moveZ = -y / 40; // invertido corretamente
 });
 
 joystick.addEventListener("touchend", () => {
   moveX = 0;
   moveZ = 0;
-  stick.style.left = "30px";
-  stick.style.top = "30px";
 });
 
-/* =========================
-   PULO
-========================= */
-document.getElementById("jumpBtn").addEventListener("click", () => {
+// Pulo
+jumpButton.addEventListener("touchstart", () => {
   if (canJump) {
     velocityY = 0.4;
     canJump = false;
   }
 });
 
-/* =========================
-   CÂMERA
-========================= */
-let cameraRotationY = 0;
-const rotateArea = document.getElementById("rotateArea");
+// ======================
+// ROTACIONAR CAMERA COM SWIPE
+// ======================
 
-let lastTouchX = 0;
+let isRotating = false;
+let previousTouch = { x: 0, y: 0 };
 
-rotateArea.addEventListener("touchstart", e => {
-  lastTouchX = e.touches[0].clientX;
+renderer.domElement.addEventListener("touchstart", (e) => {
+  if (e.target.id === "joystick" || e.target.id === "jumpButton") return;
+  isRotating = true;
+  previousTouch.x = e.touches[0].clientX;
+  previousTouch.y = e.touches[0].clientY;
 });
 
-rotateArea.addEventListener("touchmove", e => {
-  const currentX = e.touches[0].clientX;
-  const delta = currentX - lastTouchX;
-  lastTouchX = currentX;
-  cameraRotationY -= delta * 0.005;
+renderer.domElement.addEventListener("touchmove", (e) => {
+  if (!isRotating) return;
+
+  const touch = e.touches[0];
+  const deltaX = touch.clientX - previousTouch.x;
+  const deltaY = touch.clientY - previousTouch.y;
+
+  cameraRotationY -= deltaX * 0.004;
+  cameraRotationX -= deltaY * 0.004;
+
+  cameraRotationX = Math.max(-1.2, Math.min(0.8, cameraRotationX));
+
+  previousTouch.x = touch.clientX;
+  previousTouch.y = touch.clientY;
 });
 
-/* =========================
-   INTERAÇÃO
-========================= */
-const raycaster = new THREE.Raycaster();
+renderer.domElement.addEventListener("touchend", () => {
+  isRotating = false;
+});
 
-window.addEventListener("touchstart", () => {
-  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+// ======================
+// INTERAÇÃO CUBOS
+// ======================
+
+renderer.domElement.addEventListener("touchstart", (event) => {
+
+  touchVector.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+  touchVector.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(touchVector, camera);
   const intersects = raycaster.intersectObjects(cubes);
 
   if (intersects.length > 0) {
-    alert("Módulo Merlim Ativado");
+    const cube = intersects[0].object;
+    cube.material.color.set(0xaaccff);
+    alert("Você tocou: " + cube.userData.module);
   }
 });
 
-/* =========================
-   LOOP
-========================= */
+// ======================
+// LOOP
+// ======================
+
 function animate() {
   requestAnimationFrame(animate);
 
   const speed = 0.15;
 
   if (moveX !== 0 || moveZ !== 0) {
+
     const angle = Math.atan2(moveX, moveZ);
     const finalAngle = angle + cameraRotationY;
 
-    const nextX = player.position.x + Math.sin(finalAngle) * speed;
-    const nextZ = player.position.z + Math.cos(finalAngle) * speed;
-
-    let blocked = false;
-
-    cubes.forEach(cube => {
-      const box = new THREE.Box3().setFromObject(cube);
-      const playerBox = new THREE.Box3(
-        new THREE.Vector3(nextX - 0.5, player.position.y - 1, nextZ - 0.5),
-        new THREE.Vector3(nextX + 0.5, player.position.y + 2, nextZ + 0.5)
-      );
-
-      if (box.intersectsBox(playerBox)) {
-        blocked = true;
-
-        if (player.position.y >= cube.position.y) {
-          player.position.y = box.max.y + 0.01;
-          velocityY = 0;
-          canJump = true;
-        }
-      }
-    });
-
-    if (!blocked) {
-      player.position.x = nextX;
-      player.position.z = nextZ;
-    }
+    player.position.x += Math.sin(finalAngle) * speed;
+    player.position.z += Math.cos(finalAngle) * speed;
 
     player.rotation.y = finalAngle;
   }
 
+  // Gravidade
   velocityY += gravity;
   player.position.y += velocityY;
 
@@ -205,9 +232,12 @@ function animate() {
     canJump = true;
   }
 
-  camera.position.x = player.position.x - Math.sin(cameraRotationY) * 6;
-  camera.position.z = player.position.z - Math.cos(cameraRotationY) * 6;
-  camera.position.y = player.position.y + 4;
+  // Camera terceira pessoa livre
+  const offset = new THREE.Vector3(0, 5, 10);
+  offset.applyAxisAngle(new THREE.Vector3(1,0,0), cameraRotationX);
+  offset.applyAxisAngle(new THREE.Vector3(0,1,0), cameraRotationY);
+
+  camera.position.copy(player.position).add(offset);
   camera.lookAt(player.position);
 
   renderer.render(scene, camera);
@@ -215,9 +245,6 @@ function animate() {
 
 animate();
 
-/* =========================
-   RESPONSIVO
-========================= */
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
