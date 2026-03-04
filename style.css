@@ -1,7 +1,7 @@
 body {
   margin: 0;
   overflow: hidden;
-  background: #ffffff;
+  background: #eef3ff;
   touch-action: none;
 }
 
@@ -14,4 +14,5 @@ body {
   height: 110px;
   background: rgba(0,0,0,0.08);
   border-radius: 50%;
+  backdrop-filter: blur(4px);
 }
