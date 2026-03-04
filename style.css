@@ -29,3 +29,54 @@ body {
   line-height: 80px;
   font-size: 30px;
 }
+
+/* =========================
+   HUD CHAT
+========================= */
+#chatHUD {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 280px;
+  height: 200px;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+#chatMessages {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 12px;
+  color: #00ffff;
+}
+
+#chatInput {
+  border: none;
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 12px;
+}
+
+/* =========================
+   HUD DASHBOARD
+========================= */
+#dashboardHUD {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 220px;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  padding: 12px;
+  color: #00ffff;
+  font-size: 13px;
+}
+
+.dashItem {
+  margin-bottom: 8px;
+}
