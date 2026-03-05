@@ -27,7 +27,7 @@ scene.add(dirLight);
 // CHÃO + GRID
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(1000,1000,100,100),
-  new THREE.MeshStandardMaterial({color:0xffffff})
+  new THREE.MeshStandardMaterial({color:0xd0e8ff})
 );
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
@@ -35,28 +35,13 @@ scene.add(ground);
 
 const gridHelper = new THREE.GridHelper(1000,50,0x00ffff,0x00ffff);
 gridHelper.position.y = 0.01;
-gridHelper.material.opacity = 0.2;
+gridHelper.material.opacity = 0.3;
 gridHelper.material.transparent = true;
 scene.add(gridHelper);
 
 // PLAYER
 const player = new THREE.Group();
 scene.add(player);
-
-// Fallback caso GLB falhe
-const fallbackBody = new THREE.Mesh(
-  new THREE.ConeGeometry(0.6,2,6),
-  new THREE.MeshStandardMaterial({color:0xf8f8ff})
-);
-fallbackBody.position.y = 1;
-player.add(fallbackBody);
-
-const fallbackHead = new THREE.Mesh(
-  new THREE.SphereGeometry(0.4,16,16),
-  new THREE.MeshStandardMaterial({color:0xffffff})
-);
-fallbackHead.position.y = 2.2;
-player.add(fallbackHead);
 
 // -----------------
 // GLB ANIMADO
@@ -70,13 +55,9 @@ loader.load('maga.glb', gltf => {
   const box = new THREE.Box3().setFromObject(maga);
   const size = new THREE.Vector3();
   box.getSize(size);
-  const scaleFactor = 2 / Math.max(size.x,size.y,size.z);
+  const scaleFactor = 1.5 / Math.max(size.x,size.y,size.z);
   maga.scale.set(scaleFactor,scaleFactor,scaleFactor);
-  maga.position.y = 0;
-
-  // REMOVE fallback
-  player.remove(fallbackBody);
-  player.remove(fallbackHead);
+  maga.position.y = 1;
 
   player.add(maga);
 
@@ -130,24 +111,23 @@ jumpButton.addEventListener("touchstart",()=>{if(canJump){velocityY=0.4; canJump
 // -----------------
 let isRotating=false;
 let previousTouch={x:0,y:0};
-renderer.domElement.addEventListener("touchstart",(e)=>{
+renderer.domElement.addEventListener("pointerdown",(e)=>{
   if(e.target.id==="joystick"||e.target.id==="jumpButton") return;
   isRotating=true;
-  previousTouch.x = e.touches[0].clientX;
-  previousTouch.y = e.touches[0].clientY;
+  previousTouch.x = e.clientX;
+  previousTouch.y = e.clientY;
 });
-renderer.domElement.addEventListener("touchmove",(e)=>{
+renderer.domElement.addEventListener("pointermove",(e)=>{
   if(!isRotating) return;
-  const touch = e.touches[0];
-  const dx = touch.clientX - previousTouch.x;
-  const dy = touch.clientY - previousTouch.y;
+  const dx = e.clientX - previousTouch.x;
+  const dy = e.clientY - previousTouch.y;
   cameraRotationY -= dx*0.004;
   cameraRotationX -= dy*0.004;
   cameraRotationX = Math.max(-1.2, Math.min(0.8, cameraRotationX));
-  previousTouch.x = touch.clientX;
-  previousTouch.y = touch.clientY;
+  previousTouch.x = e.clientX;
+  previousTouch.y = e.clientY;
 });
-renderer.domElement.addEventListener("touchend",()=>{isRotating=false;});
+renderer.domElement.addEventListener("pointerup",()=>{isRotating=false;});
 
 // -----------------
 // HUD
@@ -180,16 +160,16 @@ const energyValue=document.getElementById("energyValue");
 const moduleCount=document.getElementById("moduleCount");
 function updateDashboard(){ energyValue.textContent = energy; moduleCount.textContent = modulesActivated; }
 
-chatIcon.addEventListener("click",()=>{chatHUD.style.display=chatHUD.style.display==="flex"?"none":"flex";});
-dashIcon.addEventListener("click",()=>{dashboardHUD.style.display=dashboardHUD.style.display==="block"?"none":"block";});
+chatIcon.addEventListener("pointerdown",()=>{chatHUD.style.display=chatHUD.style.display==="flex"?"none":"flex";});
+dashIcon.addEventListener("pointerdown",()=>{dashboardHUD.style.display=dashboardHUD.style.display==="block"?"none":"block";});
 
 // -----------------
 // INTERAÇÃO CUBOS
 // -----------------
-renderer.domElement.addEventListener("touchstart",(event)=>{
+renderer.domElement.addEventListener("pointerdown",(event)=>{
   if(event.target.id==="joystick"||event.target.id==="jumpButton") return;
-  touchVector.x=(event.touches[0].clientX/window.innerWidth)*2-1;
-  touchVector.y=-(event.touches[0].clientY/window.innerHeight)*2+1;
+  touchVector.x=(event.clientX/window.innerWidth)*2-1;
+  touchVector.y=-(event.clientY/window.innerHeight)*2+1;
   raycaster.setFromCamera(touchVector,camera);
   const intersects=raycaster.intersectObjects(cubes);
   if(intersects.length>0){
