@@ -1,12 +1,11 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160/build/three.module.js";
-import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/loaders/GLTFLoader.js";
 
 // ======================
 // CENA
 // ======================
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xeef3ff);
-scene.fog = new THREE.FogExp2(0xeef3ff, 0.002);
+scene.fog = new THREE.FogExp2(0xeef3ff, 0.002); // neblina suave
 
 // ======================
 // CAMERA
@@ -52,27 +51,26 @@ gridHelper.material.transparent = true;
 scene.add(gridHelper);
 
 // ======================
-// PLAYER (MAGO)
- // Usaremos o modelo GLB aqui
+// PLAYER
 // ======================
-const loader = new GLTFLoader();
 const player = new THREE.Group();
 scene.add(player);
 
-loader.load('maga.glb', (gltf)=>{
-  const model = gltf.scene;
-  model.traverse(child => {
-    if(child.isMesh){
-      child.castShadow = true;
-      child.receiveShadow = true;
-    }
-  });
-  model.scale.set(1,1,1); // ajuste tamanho se necessário
-  model.position.y = 0; 
-  player.add(model);
-}, undefined, (err)=>{console.error("Erro ao carregar mago:", err)});
+const body = new THREE.Mesh(
+  new THREE.ConeGeometry(0.6,2,6),
+  new THREE.MeshStandardMaterial({color:0xf8f8ff})
+);
+body.position.y = 1;
+player.add(body);
 
-player.position.y = 0;
+const head = new THREE.Mesh(
+  new THREE.SphereGeometry(0.4,16,16),
+  new THREE.MeshStandardMaterial({color:0xffffff})
+);
+head.position.y = 2.2;
+player.add(head);
+
+player.position.y = 1;
 
 // ======================
 // CUBOS NEON INTERATIVOS
@@ -186,6 +184,7 @@ renderer.domElement.addEventListener("touchstart",(event)=>{
   const intersects=raycaster.intersectObjects(cubes);
   if(intersects.length>0){
     const cube=intersects[0].object;
+    // Pulso neon
     cube.material.emissive.setHex(0x00ffff);
     setTimeout(()=>{cube.material.emissive.setHex(0x000000)},500);
     modulesActivated++;
@@ -210,7 +209,7 @@ function animate(){
   }
   velocityY+=gravity;
   player.position.y+=velocityY;
-  if(player.position.y<=0){player.position.y=0;velocityY=0;canJump=true;}
+  if(player.position.y<=1){player.position.y=1;velocityY=0;canJump=true;}
 
   // Câmera terceira pessoa
   const offset=new THREE.Vector3(0,5,10);
