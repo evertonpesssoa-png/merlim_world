@@ -39,12 +39,11 @@ gridHelper.material.opacity = 0.2;
 gridHelper.material.transparent = true;
 scene.add(gridHelper);
 
-// PLAYER (grupo)
+// PLAYER
 const player = new THREE.Group();
-player.position.set(0,1,0); 
 scene.add(player);
 
-// MODELO FALLBACK (cone + esfera) caso o GLB não carregue
+// Fallback caso GLB falhe
 const fallbackBody = new THREE.Mesh(
   new THREE.ConeGeometry(0.6,2,6),
   new THREE.MeshStandardMaterial({color:0xf8f8ff})
@@ -59,32 +58,38 @@ const fallbackHead = new THREE.Mesh(
 fallbackHead.position.y = 2.2;
 player.add(fallbackHead);
 
-// GLB Mago
+// -----------------
+// GLB ANIMADO
+// -----------------
+let mixer;
 const loader = new GLTFLoader();
 loader.load('maga.glb', gltf => {
   const maga = gltf.scene;
-  // Ajusta escala se for muito grande ou pequeno
+
+  // ESCALA
   const box = new THREE.Box3().setFromObject(maga);
   const size = new THREE.Vector3();
   box.getSize(size);
-  const maxDim = Math.max(size.x,size.y,size.z);
-  const scaleFactor = 2 / maxDim; // deixa em torno de altura 2
+  const scaleFactor = 2 / Math.max(size.x,size.y,size.z);
   maga.scale.set(scaleFactor,scaleFactor,scaleFactor);
   maga.position.y = 0;
-  
-  // Remove o fallback
+
+  // REMOVE fallback
   player.remove(fallbackBody);
   player.remove(fallbackHead);
-  
+
   player.add(maga);
-}, undefined, err => console.warn("Erro carregando maga.glb", err));
 
-// Luz neon na maga
-const magoLight = new THREE.PointLight(0x00ffff,0.6,10);
-player.add(magoLight);
-magoLight.position.set(0,2,0);
+  // ANIMAÇÃO
+  if(gltf.animations && gltf.animations.length){
+    mixer = new THREE.AnimationMixer(maga);
+    gltf.animations.forEach(clip => mixer.clipAction(clip).play());
+  }
+});
 
+// -----------------
 // CUBOS NEON
+// -----------------
 const cubes = [];
 const raycaster = new THREE.Raycaster();
 const touchVector = new THREE.Vector2();
@@ -103,7 +108,9 @@ for(let i=0;i<50;i++){
   scene.add(cube);
 }
 
+// -----------------
 // CONTROLES
+// -----------------
 let velocityY=0, gravity=-0.02, canJump=false;
 const joystick=document.getElementById("joystick");
 const jumpButton=document.getElementById("jumpButton");
@@ -118,7 +125,9 @@ joystick.addEventListener("touchmove",(e)=>{
 joystick.addEventListener("touchend",()=>{moveX=0; moveZ=0;});
 jumpButton.addEventListener("touchstart",()=>{if(canJump){velocityY=0.4; canJump=false;}});
 
-// CÂMERA SWIPE
+// -----------------
+// CAMERA SWIPE
+// -----------------
 let isRotating=false;
 let previousTouch={x:0,y:0};
 renderer.domElement.addEventListener("touchstart",(e)=>{
@@ -140,7 +149,9 @@ renderer.domElement.addEventListener("touchmove",(e)=>{
 });
 renderer.domElement.addEventListener("touchend",()=>{isRotating=false;});
 
+// -----------------
 // HUD
+// -----------------
 const chatHUD=document.getElementById("chatHUD");
 const dashboardHUD=document.getElementById("dashboardHUD");
 const chatMessages=document.getElementById("chatMessages");
@@ -163,6 +174,7 @@ chatInput.addEventListener("keydown",(e)=>{
     chatInput.value="";
   }
 });
+
 let energy=100, modulesActivated=0;
 const energyValue=document.getElementById("energyValue");
 const moduleCount=document.getElementById("moduleCount");
@@ -171,7 +183,9 @@ function updateDashboard(){ energyValue.textContent = energy; moduleCount.textCo
 chatIcon.addEventListener("click",()=>{chatHUD.style.display=chatHUD.style.display==="flex"?"none":"flex";});
 dashIcon.addEventListener("click",()=>{dashboardHUD.style.display=dashboardHUD.style.display==="block"?"none":"block";});
 
+// -----------------
 // INTERAÇÃO CUBOS
+// -----------------
 renderer.domElement.addEventListener("touchstart",(event)=>{
   if(event.target.id==="joystick"||event.target.id==="jumpButton") return;
   touchVector.x=(event.touches[0].clientX/window.innerWidth)*2-1;
@@ -189,10 +203,17 @@ renderer.domElement.addEventListener("touchstart",(event)=>{
   }
 });
 
+// -----------------
 // LOOP
+// -----------------
+const clock = new THREE.Clock();
 function animate(){
   requestAnimationFrame(animate);
 
+  const delta = clock.getDelta();
+  if(mixer) mixer.update(delta);
+
+  // MOVIMENTO PLAYER
   const speed=0.15;
   if(moveX!==0 || moveZ!==0){
     const angle = Math.atan2(moveX, moveZ);
@@ -204,7 +225,7 @@ function animate(){
 
   velocityY += gravity;
   player.position.y += velocityY;
-  if(player.position.y<=1){player.position.y=1; velocityY=0; canJump=true;}
+  if(player.position.y<=0){player.position.y=0; velocityY=0; canJump=true;}
 
   // Cubos pulsando neon
   const pulse = Math.sin(Date.now()*0.005)*0.5 + 0.5;
@@ -223,7 +244,7 @@ animate();
 
 // RESIZE
 window.addEventListener("resize",()=>{
-  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth,window.innerHeight);
 });
