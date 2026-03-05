@@ -39,34 +39,50 @@ gridHelper.material.opacity = 0.2;
 gridHelper.material.transparent = true;
 scene.add(gridHelper);
 
-// PLAYER (MAGA)
+// PLAYER (grupo)
 const player = new THREE.Group();
 player.position.set(0,1,0); 
 scene.add(player);
+
+// MODELO FALLBACK (cone + esfera) caso o GLB não carregue
+const fallbackBody = new THREE.Mesh(
+  new THREE.ConeGeometry(0.6,2,6),
+  new THREE.MeshStandardMaterial({color:0xf8f8ff})
+);
+fallbackBody.position.y = 1;
+player.add(fallbackBody);
+
+const fallbackHead = new THREE.Mesh(
+  new THREE.SphereGeometry(0.4,16,16),
+  new THREE.MeshStandardMaterial({color:0xffffff})
+);
+fallbackHead.position.y = 2.2;
+player.add(fallbackHead);
 
 // GLB Mago
 const loader = new GLTFLoader();
 loader.load('maga.glb', gltf => {
   const maga = gltf.scene;
-  maga.scale.set(1,1,1);
+  // Ajusta escala se for muito grande ou pequeno
+  const box = new THREE.Box3().setFromObject(maga);
+  const size = new THREE.Vector3();
+  box.getSize(size);
+  const maxDim = Math.max(size.x,size.y,size.z);
+  const scaleFactor = 2 / maxDim; // deixa em torno de altura 2
+  maga.scale.set(scaleFactor,scaleFactor,scaleFactor);
   maga.position.y = 0;
+  
+  // Remove o fallback
+  player.remove(fallbackBody);
+  player.remove(fallbackHead);
+  
   player.add(maga);
-}, undefined, err => console.error(err));
+}, undefined, err => console.warn("Erro carregando maga.glb", err));
 
 // Luz neon na maga
 const magoLight = new THREE.PointLight(0x00ffff,0.6,10);
 player.add(magoLight);
 magoLight.position.set(0,2,0);
-
-// PARTICULAS SUAVES
-const particlesCount = 200;
-const particlesGeometry = new THREE.BufferGeometry();
-const positions = new Float32Array(particlesCount*3);
-for(let i=0;i<positions.length;i++) positions[i]=(Math.random()-0.5)*50;
-particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions,3));
-const particlesMaterial = new THREE.PointsMaterial({color:0x00ffff, size:0.15, transparent:true, opacity:0.6});
-const particles = new THREE.Points(particlesGeometry, particlesMaterial);
-scene.add(particles);
 
 // CUBOS NEON
 const cubes = [];
@@ -102,7 +118,7 @@ joystick.addEventListener("touchmove",(e)=>{
 joystick.addEventListener("touchend",()=>{moveX=0; moveZ=0;});
 jumpButton.addEventListener("touchstart",()=>{if(canJump){velocityY=0.4; canJump=false;}});
 
-// CAMERA SWIPE
+// CÂMERA SWIPE
 let isRotating=false;
 let previousTouch={x:0,y:0};
 renderer.domElement.addEventListener("touchstart",(e)=>{
@@ -193,14 +209,6 @@ function animate(){
   // Cubos pulsando neon
   const pulse = Math.sin(Date.now()*0.005)*0.5 + 0.5;
   cubes.forEach(cube => { cube.material.emissiveIntensity = 0.3 + pulse*0.2; });
-
-  // Partículas leves
-  const pos = particles.geometry.attributes.position.array;
-  for(let i=0;i<pos.length;i+=3){
-    pos[i+1]+=0.01;
-    if(pos[i+1]>25) pos[i+1]=-25;
-  }
-  particles.geometry.attributes.position.needsUpdate = true;
 
   // Câmera terceira pessoa
   const offset=new THREE.Vector3(0,5,10);
