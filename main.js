@@ -1,40 +1,30 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160/build/three.module.js";
 import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/loaders/GLTFLoader.js";
 
-// ======================
 // CENA
-// ======================
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xeef3ff);
 scene.fog = new THREE.FogExp2(0xeef3ff, 0.002);
 
-// ======================
 // CAMERA
-// ======================
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 let cameraRotationY = 0, cameraRotationX = -0.3;
 
-// ======================
 // RENDERER
-// ======================
 const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
 
-// ======================
 // LUZ
-// ======================
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
 dirLight.position.set(30,60,20);
 dirLight.castShadow = true;
 scene.add(dirLight);
 
-// ======================
 // CHÃO + GRID
-// ======================
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(1000,1000,100,100),
   new THREE.MeshStandardMaterial({color:0xffffff})
@@ -49,43 +39,35 @@ gridHelper.material.opacity = 0.2;
 gridHelper.material.transparent = true;
 scene.add(gridHelper);
 
-// ======================
 // PLAYER (MAGA)
 const player = new THREE.Group();
+player.position.set(0,1,0); 
 scene.add(player);
 
-// Carregar modelo GLB
+// GLB Mago
 const loader = new GLTFLoader();
 loader.load('maga.glb', gltf => {
   const maga = gltf.scene;
-  maga.scale.set(1.2,1.2,1.2);
+  maga.scale.set(1,1,1);
   maga.position.y = 0;
   player.add(maga);
 }, undefined, err => console.error(err));
 
-// Luz neon sobre a maga
+// Luz neon na maga
 const magoLight = new THREE.PointLight(0x00ffff,0.6,10);
 player.add(magoLight);
 magoLight.position.set(0,2,0);
 
-// ======================
-// PARTICULAS (poeira neon)
-const particlesCount = 500;
+// PARTICULAS SUAVES
+const particlesCount = 200;
 const particlesGeometry = new THREE.BufferGeometry();
-const positions = new Float32Array(particlesCount * 3);
-for(let i=0;i<particlesCount*3;i++) positions[i]=(Math.random()-0.5)*400;
-
+const positions = new Float32Array(particlesCount*3);
+for(let i=0;i<positions.length;i++) positions[i]=(Math.random()-0.5)*50;
 particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions,3));
-const particlesMaterial = new THREE.PointsMaterial({
-  color: 0x00ffff,
-  size: 0.2,
-  transparent: true,
-  opacity: 0.7
-});
+const particlesMaterial = new THREE.PointsMaterial({color:0x00ffff, size:0.15, transparent:true, opacity:0.6});
 const particles = new THREE.Points(particlesGeometry, particlesMaterial);
 scene.add(particles);
 
-// ======================
 // CUBOS NEON
 const cubes = [];
 const raycaster = new THREE.Raycaster();
@@ -105,7 +87,6 @@ for(let i=0;i<50;i++){
   scene.add(cube);
 }
 
-// ======================
 // CONTROLES
 let velocityY=0, gravity=-0.02, canJump=false;
 const joystick=document.getElementById("joystick");
@@ -121,7 +102,6 @@ joystick.addEventListener("touchmove",(e)=>{
 joystick.addEventListener("touchend",()=>{moveX=0; moveZ=0;});
 jumpButton.addEventListener("touchstart",()=>{if(canJump){velocityY=0.4; canJump=false;}});
 
-// ======================
 // CAMERA SWIPE
 let isRotating=false;
 let previousTouch={x:0,y:0};
@@ -144,7 +124,6 @@ renderer.domElement.addEventListener("touchmove",(e)=>{
 });
 renderer.domElement.addEventListener("touchend",()=>{isRotating=false;});
 
-// ======================
 // HUD
 const chatHUD=document.getElementById("chatHUD");
 const dashboardHUD=document.getElementById("dashboardHUD");
@@ -160,7 +139,6 @@ function addMessage(text,type="system"){
   chatMessages.appendChild(msg);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
 chatInput.addEventListener("keydown",(e)=>{
   if(e.key==="Enter" && chatInput.value.trim()!==""){
     const userText = chatInput.value;
@@ -169,21 +147,15 @@ chatInput.addEventListener("keydown",(e)=>{
     chatInput.value="";
   }
 });
-
 let energy=100, modulesActivated=0;
 const energyValue=document.getElementById("energyValue");
 const moduleCount=document.getElementById("moduleCount");
-function updateDashboard(){
-  energyValue.textContent = energy;
-  moduleCount.textContent = modulesActivated;
-}
+function updateDashboard(){ energyValue.textContent = energy; moduleCount.textContent = modulesActivated; }
 
-// Toggle HUD
 chatIcon.addEventListener("click",()=>{chatHUD.style.display=chatHUD.style.display==="flex"?"none":"flex";});
 dashIcon.addEventListener("click",()=>{dashboardHUD.style.display=dashboardHUD.style.display==="block"?"none":"block";});
 
-// ======================
-// INTERAÇÃO CUBOS NEON
+// INTERAÇÃO CUBOS
 renderer.domElement.addEventListener("touchstart",(event)=>{
   if(event.target.id==="joystick"||event.target.id==="jumpButton") return;
   touchVector.x=(event.touches[0].clientX/window.innerWidth)*2-1;
@@ -201,7 +173,6 @@ renderer.domElement.addEventListener("touchstart",(event)=>{
   }
 });
 
-// ======================
 // LOOP
 function animate(){
   requestAnimationFrame(animate);
@@ -223,11 +194,11 @@ function animate(){
   const pulse = Math.sin(Date.now()*0.005)*0.5 + 0.5;
   cubes.forEach(cube => { cube.material.emissiveIntensity = 0.3 + pulse*0.2; });
 
-  // Partículas flutuando
-  const positions = particles.geometry.attributes.position.array;
-  for(let i=0;i<positions.length;i+=3){
-    positions[i+1]+=0.02;
-    if(positions[i+1]>50) positions[i+1]=-50;
+  // Partículas leves
+  const pos = particles.geometry.attributes.position.array;
+  for(let i=0;i<pos.length;i+=3){
+    pos[i+1]+=0.01;
+    if(pos[i+1]>25) pos[i+1]=-25;
   }
   particles.geometry.attributes.position.needsUpdate = true;
 
@@ -242,7 +213,6 @@ function animate(){
 }
 animate();
 
-// ======================
 // RESIZE
 window.addEventListener("resize",()=>{
   camera.aspect=window.innerWidth/window.innerHeight;
