@@ -21,17 +21,15 @@ renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
 // ======================
-// LUZ
+// LUZ (mais robusta)
 // ======================
-scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.4);
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.3);
 dirLight.position.set(30, 60, 20);
-dirLight.castShadow = true;
 scene.add(dirLight);
 
-// luz extra (evita modelo invisível)
-scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.5));
+scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.2));
 
 // ======================
 // CHÃO + GRID
@@ -46,17 +44,16 @@ scene.add(ground);
 const grid = new THREE.GridHelper(1000, 50, 0x00ffff, 0x00ffff);
 grid.position.y = 0.01;
 grid.material.transparent = true;
-grid.material.opacity = 0.2;
+grid.material.opacity = 0.25;
 scene.add(grid);
 
 // ======================
-// PLAYER (LÓGICA)
-–======================
+// PLAYER BASE
+// ======================
 const player = new THREE.Group();
-scene.add(player);
 player.position.y = 1;
+scene.add(player);
 
-// corpo placeholder (vai sumir depois da maga)
 const placeholder = new THREE.Mesh(
   new THREE.ConeGeometry(0.6, 2, 6),
   new THREE.MeshStandardMaterial({ color: 0xffffff })
@@ -124,6 +121,7 @@ renderer.domElement.addEventListener("touchmove", (e) => {
 
   camRotY -= dx * 0.004;
   camRotX -= dy * 0.004;
+
   camRotX = Math.max(-1.2, Math.min(0.8, camRotX));
 
   prev.x = t.clientX;
@@ -135,11 +133,12 @@ renderer.domElement.addEventListener("touchend", () => {
 });
 
 // ======================
-// MAGA (GLB)
+// MAGA GLB (ROBUSTA)
 // ======================
 const loader = new GLTFLoader();
-let mixer = null;
+
 let maga = null;
+let mixer = null;
 
 loader.load(
   "maga.gbl",
@@ -149,36 +148,22 @@ loader.load(
 
     maga = gltf.scene;
 
-    // centralizar e ajustar escala automaticamente
-    const box = new THREE.Box3().setFromObject(maga);
-    const size = new THREE.Vector3();
-    box.getSize(size);
-
-    const center = new THREE.Vector3();
-    box.getCenter(center);
-
-    maga.position.sub(center);
-
-    const scale = 2 / size.y;
-    maga.scale.set(scale, scale, scale);
+    // 🔥 garante visibilidade SEM depender de bounding box extrema
+    maga.position.set(0, 0, 0);
+    maga.scale.set(2, 2, 2);
 
     scene.add(maga);
 
     // animação
-    if (gltf.animations.length > 0) {
+    if (gltf.animations && gltf.animations.length > 0) {
       mixer = new THREE.AnimationMixer(maga);
-      gltf.animations.forEach((clip) => {
-        mixer.clipAction(clip).play();
-      });
+      gltf.animations.forEach((clip) => mixer.clipAction(clip).play());
     }
 
-    // remove placeholder quando maga aparece
     player.remove(placeholder);
   },
 
-  (p) => {
-    if (p.total) console.log("Carregando maga:", (p.loaded / p.total * 100).toFixed(0) + "%");
-  },
+  undefined,
 
   (err) => {
     console.error("Erro ao carregar maga:", err);
@@ -186,21 +171,7 @@ loader.load(
 );
 
 // ======================
-// HUD (mínimo ajuste)
-// ======================
-const chatHUD = document.getElementById("chatHUD");
-const dashboardHUD = document.getElementById("dashboardHUD");
-const chatMessages = document.getElementById("chatMessages");
-const chatInput = document.getElementById("chatInput");
-
-function addMessage(text, type = "system") {
-  const msg = document.createElement("div");
-  msg.textContent = (type === "user" ? "Você: " : "Merlim: ") + text;
-  chatMessages.appendChild(msg);
-}
-
-// ======================
-// CUBOS
+// CUBOS (VISÍVEIS SEM FALHA)
 // ======================
 const cubes = [];
 const raycaster = new THREE.Raycaster();
@@ -209,17 +180,43 @@ const mouse = new THREE.Vector2();
 for (let i = 0; i < 30; i++) {
   const cube = new THREE.Mesh(
     new THREE.BoxGeometry(3, Math.random() * 6 + 2, 3),
-    new THREE.MeshStandardMaterial({ color: 0x111111 })
+    new THREE.MeshStandardMaterial({
+      color: 0x111111,
+      emissive: 0x000000,
+      metalness: 0.4,
+      roughness: 0.5
+    })
   );
 
-  cube.position.set((Math.random() - 0.5) * 150, 2, (Math.random() - 0.5) * 150);
+  cube.position.set(
+    (Math.random() - 0.5) * 150,
+    2,
+    (Math.random() - 0.5) * 150
+  );
+
   cube.userData.module = "Módulo " + i;
 
   cubes.push(cube);
   scene.add(cube);
 }
 
-// interação simples
+// ======================
+// HUD CHAT
+// ======================
+const chatHUD = document.getElementById("chatHUD");
+const dashboardHUD = document.getElementById("dashboardHUD");
+const chatMessages = document.getElementById("chatMessages");
+
+function addMessage(text) {
+  const msg = document.createElement("div");
+  msg.textContent = "Merlim: " + text;
+  chatMessages.appendChild(msg);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// ======================
+// INTERAÇÃO CUBOS
+// ======================
 renderer.domElement.addEventListener("touchstart", (e) => {
   if (e.target.id === "joystick" || e.target.id === "jumpButton") return;
 
@@ -230,16 +227,16 @@ renderer.domElement.addEventListener("touchstart", (e) => {
 
   const hit = raycaster.intersectObjects(cubes);
 
-  if (hit.length) {
+  if (hit.length > 0) {
     const c = hit[0].object;
 
-    c.material.color.set(0x00ffff);
-
-    addMessage("Ativou: " + c.userData.module);
+    c.material.emissive.set(0x00ffff);
 
     setTimeout(() => {
-      c.material.color.set(0x111111);
+      c.material.emissive.set(0x000000);
     }, 400);
+
+    addMessage("Ativou " + c.userData.module);
   }
 });
 
@@ -255,7 +252,6 @@ function animate() {
 
   if (mixer) mixer.update(delta);
 
-  // movimento player
   const speed = 0.15;
 
   if (moveX || moveZ) {
@@ -264,6 +260,7 @@ function animate() {
 
     player.position.x += Math.sin(final) * speed;
     player.position.z += Math.cos(final) * speed;
+
     player.rotation.y = final;
   }
 
@@ -276,7 +273,7 @@ function animate() {
     canJump = true;
   }
 
-  // câmera
+  // câmera segura
   const offset = new THREE.Vector3(0, 5, 10);
   offset.applyAxisAngle(new THREE.Vector3(1, 0, 0), camRotX);
   offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), camRotY);
@@ -289,7 +286,9 @@ function animate() {
 
 animate();
 
-// resize
+// ======================
+// RESIZE
+// ======================
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
