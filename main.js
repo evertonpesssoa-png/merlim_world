@@ -4,69 +4,172 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160/build/three.mod
 // DEBUG NA TELA
 // ======================
 const debug = document.createElement("div");
+
 debug.style.position = "fixed";
 debug.style.top = "10px";
 debug.style.left = "10px";
-debug.style.color = "red";
+debug.style.padding = "8px 12px";
+debug.style.background = "rgba(0,0,0,0.7)";
+debug.style.color = "#00ff88";
+debug.style.fontFamily = "monospace";
+debug.style.fontSize = "14px";
+debug.style.borderRadius = "8px";
 debug.style.zIndex = "9999";
+
 debug.innerText = "INIT";
+
 document.body.appendChild(debug);
 
 // ======================
 // SCENE
 // ======================
 const scene = new THREE.Scene();
+
 scene.background = new THREE.Color(0x222222);
 
 // ======================
-// CAMERA (FORÇADA)
+// CAMERA
 // ======================
-const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 1000);
-camera.position.set(0, 5, 10);
+const camera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
+
+camera.position.set(0, 2, 8);
+
 camera.lookAt(0, 0, 0);
 
 // ======================
-// RENDERER (FORÇA NA FRENTE)
+// RENDERER
 // ======================
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(innerWidth, innerHeight);
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: false
+});
 
-// 🔥 ISSO RESOLVE MUITO BUG
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+// 🔥 IMPORTANTE NO MOBILE
+renderer.setPixelRatio(window.devicePixelRatio);
+
+// 🔥 SOMBRAS FUTURAMENTE
+renderer.shadowMap.enabled = true;
+
+// ======================
+// CANVAS FIXO
+// ======================
 renderer.domElement.style.position = "fixed";
 renderer.domElement.style.top = "0";
 renderer.domElement.style.left = "0";
-renderer.domElement.style.zIndex = "0";
+renderer.domElement.style.width = "100%";
+renderer.domElement.style.height = "100%";
+renderer.domElement.style.zIndex = "1";
 
 document.body.appendChild(renderer.domElement);
 
 // ======================
-// LUZ
+// LUZES
 // ======================
-scene.add(new THREE.AmbientLight(0xffffff, 2));
+
+// Luz ambiente
+const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
+
+scene.add(ambientLight);
+
+// Luz direcional
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+
+directionalLight.position.set(5, 10, 5);
+
+scene.add(directionalLight);
 
 // ======================
-// OBJETO TESTE (SE NÃO APARECER → PROBLEMA GLOBAL)
+// OBJETO TESTE
 // ======================
 const cube = new THREE.Mesh(
+
   new THREE.BoxGeometry(2, 2, 2),
-  new THREE.MeshStandardMaterial({ color: 0x00ff00 })
+
+  new THREE.MeshStandardMaterial({
+    color: 0x00ffcc,
+    metalness: 0.4,
+    roughness: 0.2
+  })
+
 );
+
 scene.add(cube);
+
+// ======================
+// CHÃO TESTE
+// ======================
+const floor = new THREE.Mesh(
+
+  new THREE.PlaneGeometry(20, 20),
+
+  new THREE.MeshStandardMaterial({
+    color: 0x111111
+  })
+
+);
+
+floor.rotation.x = -Math.PI / 2;
+
+floor.position.y = -2;
+
+scene.add(floor);
+
+// ======================
+// RESPONSIVO
+// ======================
+window.addEventListener("resize", () => {
+
+  camera.aspect =
+    window.innerWidth / window.innerHeight;
+
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  );
+
+  renderer.setPixelRatio(
+    window.devicePixelRatio
+  );
+
+});
 
 // ======================
 // LOOP
 // ======================
 function animate() {
+
   requestAnimationFrame(animate);
 
+  cube.rotation.x += 0.005;
   cube.rotation.y += 0.01;
 
   renderer.render(scene, camera);
+
 }
 
+// ======================
+// START
+// ======================
 try {
+
   animate();
+
   debug.innerText = "RENDER OK";
+
 } catch (e) {
-  debug.innerText = "ERRO: " + e.message;
+
+  debug.innerText =
+    "ERRO: " + e.message;
+
+  console.error(e);
+
 }
