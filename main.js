@@ -1,7 +1,5 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160/build/three.module.js";
 
-import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/loaders/GLTFLoader.js";
-
 // ======================
 // DEBUG NA TELA
 // ======================
@@ -47,8 +45,7 @@ camera.lookAt(0, 0, 0);
 // RENDERER
 // ======================
 const renderer = new THREE.WebGLRenderer({
-  antialias: true,
-  alpha: false
+  antialias: true
 });
 
 renderer.setSize(
@@ -56,23 +53,21 @@ renderer.setSize(
   window.innerHeight
 );
 
-// 🔥 IMPORTANTE NO MOBILE
 renderer.setPixelRatio(
   window.devicePixelRatio
 );
 
-// 🔥 SOMBRAS FUTURAMENTE
 renderer.shadowMap.enabled = true;
 
 // ======================
-// CANVAS FIXO
+// CANVAS
 // ======================
 renderer.domElement.style.position = "fixed";
 renderer.domElement.style.top = "0";
 renderer.domElement.style.left = "0";
 renderer.domElement.style.width = "100%";
 renderer.domElement.style.height = "100%";
-renderer.domElement.style.zIndex = "1";
+renderer.domElement.style.zIndex = "999";
 
 document.body.appendChild(
   renderer.domElement
@@ -81,17 +76,14 @@ document.body.appendChild(
 // ======================
 // LUZES
 // ======================
-
-// Luz ambiente
 const ambientLight =
   new THREE.AmbientLight(
     0xffffff,
-    1.8
+    1.5
   );
 
 scene.add(ambientLight);
 
-// Luz direcional
 const directionalLight =
   new THREE.DirectionalLight(
     0xffffff,
@@ -123,90 +115,26 @@ floor.rotation.x = -Math.PI / 2;
 
 floor.position.y = -2;
 
-floor.receiveShadow = true;
-
 scene.add(floor);
 
 // ======================
-// MODELO GLB
+// CUBO TESTE
 // ======================
-const loader = new GLTFLoader();
+const cube = new THREE.Mesh(
 
-loader.load(
+  new THREE.BoxGeometry(2, 2, 2),
 
-  "./merlim.glb",
-
-  (gltf) => {
-
-    const model = gltf.scene;
-
-    // posição
-    model.position.set(
-      0,
-      0,
-      0
-    );
-
-    // 🔥 escala pequena para teste
-    model.scale.set(
-      0.01,
-      0.01,
-      0.01
-    );
-
-    // sombras
-    model.traverse((child) => {
-
-      if (child.isMesh) {
-
-        child.castShadow = true;
-
-        child.receiveShadow = true;
-
-      }
-
-    });
-
-    scene.add(model);
-
-    debug.innerText =
-      "MERLIM GLB OK";
-
-    console.log(
-      "Modelo carregado:",
-      model
-    );
-
-  },
-
-  // progresso
-  (xhr) => {
-
-    if (xhr.total) {
-
-      const percent =
-        (xhr.loaded / xhr.total) * 100;
-
-      debug.innerText =
-        "CARREGANDO " +
-        percent.toFixed(0) +
-        "%";
-
-    }
-
-  },
-
-  // erro
-  (error) => {
-
-    console.error(error);
-
-    debug.innerText =
-      "ERRO GLB";
-
-  }
+  new THREE.MeshStandardMaterial({
+    color: 0x00ffcc,
+    metalness: 0.3,
+    roughness: 0.2
+  })
 
 );
+
+cube.position.set(0, 0, 0);
+
+scene.add(cube);
 
 // ======================
 // RESPONSIVO
@@ -226,10 +154,6 @@ window.addEventListener(
       window.innerHeight
     );
 
-    renderer.setPixelRatio(
-      window.devicePixelRatio
-    );
-
   }
 );
 
@@ -241,6 +165,10 @@ function animate() {
   requestAnimationFrame(
     animate
   );
+
+  cube.rotation.x += 0.005;
+
+  cube.rotation.y += 0.01;
 
   renderer.render(
     scene,
@@ -257,7 +185,7 @@ try {
   animate();
 
   debug.innerText =
-    "RENDER OK";
+    "CUBO OK";
 
 } catch (e) {
 
