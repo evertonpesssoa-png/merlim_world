@@ -1,39 +1,131 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
   <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <title>Merlim - Mundo Arquiteto</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="style.css">
+
 </head>
+
 <body>
 
-<div id="joystick">
-  <div id="stick"></div>
-</div>
+  <!-- =========================
+       CONTAINER PRINCIPAL
+  ========================== -->
 
-<div id="jumpButton">▲</div>
-<div id="rotateArea"></div>
+  <div id="gameContainer">
 
-<!-- ÍCONES FIXOS -->
-<div id="hudIcons">
-  <div class="hudIcon" id="chatIcon">🧙‍♀️</div>
-  <div class="hudIcon" id="dashIcon">📊</div>
-</div>
+    <!-- THREE.JS -->
+    <div id="world"></div>
 
-<!-- HUD CHAT -->
-<div id="chatHUD">
-  <div id="chatMessages"></div>
-  <input type="text" id="chatInput" placeholder="Falar com Merlim..." />
-</div>
+    <!-- OVERLAY FUTURO -->
+    <div id="screenOverlay"></div>
 
-<!-- HUD DASHBOARD -->
-<div id="dashboardHUD">
-  <div class="dashItem">Energia: <span id="energyValue">100</span>%</div>
-  <div class="dashItem">Módulos: <span id="moduleCount">0</span></div>
-  <div class="dashItem">Status: <span id="playerStatus">Online</span></div>
-</div>
+    <!-- =========================
+         JOYSTICK
+    ========================== -->
 
-<script type="module" src="main.js"></script>
+    <div id="joystick">
+      <div id="stick"></div>
+    </div>
+
+    <!-- =========================
+         BOTÃO PULO
+    ========================== -->
+
+    <div id="jumpButton">
+      ▲
+    </div>
+
+    <!-- ÁREA DE ROTAÇÃO -->
+    <div id="rotateArea"></div>
+
+    <!-- =========================
+         HUD ÍCONES
+    ========================== -->
+
+    <div id="hudIcons">
+
+      <button
+        class="hudIcon"
+        id="chatIcon"
+      >
+        🧙‍♀️
+      </button>
+
+      <button
+        class="hudIcon"
+        id="dashIcon"
+      >
+        📊
+      </button>
+
+    </div>
+
+    <!-- =========================
+         HUD CHAT
+    ========================== -->
+
+    <div id="chatHUD">
+
+      <div id="chatMessages"></div>
+
+      <input
+        type="text"
+        id="chatInput"
+        placeholder="Falar com Merlim..."
+      >
+
+    </div>
+
+    <!-- =========================
+         HUD DASHBOARD
+    ========================== -->
+
+    <div id="dashboardHUD">
+
+      <div class="dashItem">
+        Energia:
+        <span id="energyValue">
+          100
+        </span>%
+      </div>
+
+      <div class="dashItem">
+        Módulos:
+        <span id="moduleCount">
+          0
+        </span>
+      </div>
+
+      <div class="dashItem">
+        Status:
+        <span id="playerStatus">
+          Online
+        </span>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- =========================
+       THREE MAIN
+  ========================== -->
+
+  <script
+    type="module"
+    src="main.js"
+  ></script>
+
 </body>
 </html>
