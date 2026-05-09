@@ -1,4 +1,5 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160/build/three.module.js";
+import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.160/examples/jsm/loaders/GLTFLoader.js";
 
 // ======================
 // DEBUG NA TELA
@@ -17,14 +18,12 @@ debug.style.borderRadius = "8px";
 debug.style.zIndex = "9999";
 
 debug.innerText = "INIT";
-
 document.body.appendChild(debug);
 
 // ======================
 // SCENE
 // ======================
 const scene = new THREE.Scene();
-
 scene.background = new THREE.Color(0x222222);
 
 // ======================
@@ -38,7 +37,6 @@ const camera = new THREE.PerspectiveCamera(
 );
 
 camera.position.set(0, 2, 8);
-
 camera.lookAt(0, 0, 0);
 
 // ======================
@@ -48,15 +46,8 @@ const renderer = new THREE.WebGLRenderer({
   antialias: true
 });
 
-renderer.setSize(
-  window.innerWidth,
-  window.innerHeight
-);
-
-renderer.setPixelRatio(
-  window.devicePixelRatio
-);
-
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
 renderer.shadowMap.enabled = true;
 
 // ======================
@@ -69,129 +60,100 @@ renderer.domElement.style.width = "100%";
 renderer.domElement.style.height = "100%";
 renderer.domElement.style.zIndex = "999";
 
-document.body.appendChild(
-  renderer.domElement
-);
+document.body.appendChild(renderer.domElement);
 
 // ======================
 // LUZES
 // ======================
-const ambientLight =
-  new THREE.AmbientLight(
-    0xffffff,
-    1.5
-  );
-
+const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
 scene.add(ambientLight);
 
-const directionalLight =
-  new THREE.DirectionalLight(
-    0xffffff,
-    2
-  );
-
-directionalLight.position.set(
-  5,
-  10,
-  5
-);
-
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+directionalLight.position.set(5, 10, 5);
 scene.add(directionalLight);
 
 // ======================
 // CHÃO
 // ======================
 const floor = new THREE.Mesh(
-
   new THREE.PlaneGeometry(20, 20),
-
-  new THREE.MeshStandardMaterial({
-    color: 0x111111
-  })
-
+  new THREE.MeshStandardMaterial({ color: 0x111111 })
 );
 
 floor.rotation.x = -Math.PI / 2;
-
 floor.position.y = -2;
-
 scene.add(floor);
 
 // ======================
-// CUBO TESTE
+// MODELO OCULOS GLB
 // ======================
-const cube = new THREE.Mesh(
+const loader = new GLTFLoader();
 
-  new THREE.BoxGeometry(2, 2, 2),
+let model = null;
 
-  new THREE.MeshStandardMaterial({
-    color: 0x00ffcc,
-    metalness: 0.3,
-    roughness: 0.2
-  })
+loader.load(
+  "./oculos_kita.glb", // 👈 está na raiz
 
+  (gltf) => {
+    model = gltf.scene;
+
+    model.scale.set(1, 1, 1);
+    model.position.set(0, 0, 0);
+
+    model.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    scene.add(model);
+
+    debug.innerText = "OCULOS OK";
+  },
+
+  (xhr) => {
+    if (xhr.total) {
+      const percent = (xhr.loaded / xhr.total) * 100;
+      debug.innerText = "CARREGANDO " + percent.toFixed(0) + "%";
+    }
+  },
+
+  (error) => {
+    console.error(error);
+    debug.innerText = "ERRO GLB";
+  }
 );
-
-cube.position.set(0, 0, 0);
-
-scene.add(cube);
 
 // ======================
 // RESPONSIVO
 // ======================
-window.addEventListener(
-  "resize",
-  () => {
-
-    camera.aspect =
-      window.innerWidth /
-      window.innerHeight;
-
-    camera.updateProjectionMatrix();
-
-    renderer.setSize(
-      window.innerWidth,
-      window.innerHeight
-    );
-
-  }
-);
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
 
 // ======================
 // LOOP
 // ======================
 function animate() {
+  requestAnimationFrame(animate);
 
-  requestAnimationFrame(
-    animate
-  );
+  if (model) {
+    model.rotation.y += 0.01; // leve rotação pra teste
+  }
 
-  cube.rotation.x += 0.005;
-
-  cube.rotation.y += 0.01;
-
-  renderer.render(
-    scene,
-    camera
-  );
-
+  renderer.render(scene, camera);
 }
 
 // ======================
 // START
 // ======================
 try {
-
   animate();
-
-  debug.innerText =
-    "CUBO OK";
-
+  debug.innerText = "RENDER OK";
 } catch (e) {
-
-  debug.innerText =
-    "ERRO: " + e.message;
-
+  debug.innerText = "ERRO: " + e.message;
   console.error(e);
-
 }
