@@ -123,6 +123,8 @@ floor.rotation.x = -Math.PI / 2;
 
 floor.position.y = -2;
 
+floor.receiveShadow = true;
+
 scene.add(floor);
 
 // ======================
@@ -132,7 +134,7 @@ const loader = new GLTFLoader();
 
 loader.load(
 
-  "./models/merlim.glb",
+  "./merlim.glb",
 
   (gltf) => {
 
@@ -141,15 +143,15 @@ loader.load(
     // posição
     model.position.set(
       0,
-      -2,
+      0,
       0
     );
 
-    // escala
+    // 🔥 escala pequena para teste
     model.scale.set(
-      2,
-      2,
-      2
+      0.01,
+      0.01,
+      0.01
     );
 
     // sombras
@@ -180,13 +182,17 @@ loader.load(
   // progresso
   (xhr) => {
 
-    const percent =
-      (xhr.loaded / xhr.total) * 100;
+    if (xhr.total) {
 
-    debug.innerText =
-      "CARREGANDO " +
-      percent.toFixed(0) +
-      "%";
+      const percent =
+        (xhr.loaded / xhr.total) * 100;
+
+      debug.innerText =
+        "CARREGANDO " +
+        percent.toFixed(0) +
+        "%";
+
+    }
 
   },
 
